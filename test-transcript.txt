@@ -1,0 +1,61 @@
+Meeting: Weekly Engineering Sync
+Date: January 15, 2024
+
+John: Good morning everyone. Let's review our sprint progress and discuss blockers.
+
+Sarah: The API migration is 80% complete. We've migrated all the user endpoints and most of the product endpoints. We should finish the remaining work by Friday.
+
+John: Great progress, Sarah. Any blockers on your side?
+
+Sarah: Just waiting on the updated API specs from the design team for the new checkout flow.
+
+Mike: I'm blocked on the database credentials issue. I've been waiting on DevOps for three days now.
+
+John: That's concerning. I'll escalate this with the DevOps manager today. We can't have you blocked for that long. Mike, can you work on the frontend components in the meantime?
+
+Mike: Yes, I can switch to the dashboard redesign task. I just need the Figma designs.
+
+John: Sarah, can you share those with Mike after this meeting?
+
+Sarah: Absolutely. I'll send them right after we're done here.
+
+John: Perfect. Now let's discuss the security audit findings. We need to prioritize the high-severity items.
+
+Sarah: The main issue is the SQL injection vulnerability in the search endpoint. I've already started working on the fix using parameterized queries.
+
+Mike: I found two XSS vulnerabilities in the comment section. I can fix those today.
+
+John: Let's make sure both of these are fixed and deployed by end of week. These are critical.
+
+Sarah: Agreed. We should also schedule a follow-up penetration test once the fixes are deployed.
+
+John: Good idea. I'll coordinate with the security team. Decision: We'll schedule the pen test for next Wednesday.
+
+Mike: One more thing - we need to decide on the caching strategy for the dashboard. Redis or Memcached?
+
+John: Let's go with Redis. It offers more features and we're already using it for the job queue. Decision made.
+
+Sarah: We should document that in the architecture decision records.
+
+John: Action item for me - I'll create the ADR by tomorrow.
+
+Mike: I have a question about the deployment timeline. When are we targeting for production?
+
+John: Current target is February 1st, but we need to reassess after fixing the security issues. There's a risk we might slip by a week.
+
+Sarah: If we slip, we should notify marketing so they can adjust the launch campaign.
+
+John: Absolutely. I'll send them a heads up about the potential delay.
+
+Any other topics? No? Alright, let's wrap up.
+
+Action Items Summary:
+- John: Escalate database credentials issue with DevOps (today)
+- Sarah: Share Figma designs with Mike (today)
+- Sarah: Fix SQL injection vulnerability (by Friday)
+- Mike: Fix XSS vulnerabilities (today)
+- John: Create ADR for Redis decision (by tomorrow)
+- John: Notify marketing about potential delay (by EOD)
+
+Meeting adjourned at 10:30 AM.
+
