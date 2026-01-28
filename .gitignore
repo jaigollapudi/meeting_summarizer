@@ -11,7 +11,6 @@ build/
 # Database
 *.db
 *.db-journal
-prisma/migrations/
 
 # Uploads
 data/uploads/*
