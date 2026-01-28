@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { MeetingStatus, JobType, JobStatus } from "@prisma/client";
+import { MeetingStatus } from "@prisma/client";
+import { summarizeTranscript } from "@/lib/summarizer";
 
 export async function POST(
   request: NextRequest,
@@ -25,23 +26,58 @@ export async function POST(
       );
     }
 
+    if (!meeting.transcript.normalizedText) {
+      return NextResponse.json(
+        { error: "Transcript not normalized" },
+        { status: 400 }
+      );
+    }
+
     // Update meeting status to PROCESSING
     await prisma.meeting.update({
       where: { id },
       data: { status: MeetingStatus.PROCESSING },
     });
 
-    // Enqueue a new summarization job
-    await prisma.job.create({
-      data: {
-        meetingId: id,
-        type: JobType.SUMMARIZE_TRANSCRIPT,
-        status: JobStatus.QUEUED,
-        runAt: new Date(),
-      },
-    });
+    try {
+      // Run summarization synchronously (serverless-compatible)
+      const { summaryJson, summaryMarkdown, model, promptVersion } = 
+        await summarizeTranscript(meeting.transcript.normalizedText);
 
-    return NextResponse.json({ success: true, message: "Summarization job queued" });
+      // Create new summary
+      await prisma.summary.create({
+        data: {
+          meetingId: id,
+          model,
+          promptVersion,
+          summaryJson: JSON.stringify(summaryJson),
+          summaryMarkdown,
+        },
+      });
+
+      // Mark as ready
+      await prisma.meeting.update({
+        where: { id },
+        data: { status: MeetingStatus.READY },
+      });
+
+      return NextResponse.json({ 
+        success: true, 
+        message: "Summary regenerated successfully" 
+      });
+    } catch (error) {
+      // Mark as failed
+      await prisma.meeting.update({
+        where: { id },
+        data: { status: MeetingStatus.FAILED },
+      });
+
+      console.error("Summarization failed:", error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Summarization failed" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Failed to rerun summary:", error);
     return NextResponse.json(
@@ -50,4 +86,3 @@ export async function POST(
     );
   }
 }
-
