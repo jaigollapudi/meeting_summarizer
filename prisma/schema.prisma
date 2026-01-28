@@ -3,27 +3,44 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Note: SQLite doesn't support enums, so we use String fields with validation in code
-// MeetingStatus: PROCESSING | READY | FAILED
-// SourceType: UPLOAD
-// JobType: EXTRACT_TEXT | NORMALIZE_TRANSCRIPT | SUMMARIZE_TRANSCRIPT
-// JobStatus: QUEUED | RUNNING | SUCCESS | FAILED
+enum MeetingStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum SourceType {
+  UPLOAD
+}
+
+enum JobType {
+  EXTRACT_TEXT
+  NORMALIZE_TRANSCRIPT
+  SUMMARIZE_TRANSCRIPT
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCESS
+  FAILED
+}
 
 model Meeting {
-  id               String   @id @default(uuid())
+  id               String        @id @default(uuid())
   title            String
   meetingDate      DateTime?
   tags             String?       // comma-separated
-  status           String   @default("PROCESSING") // PROCESSING | READY | FAILED
-  sourceType       String   @default("UPLOAD")     // UPLOAD
+  status           MeetingStatus @default(PROCESSING)
+  sourceType       SourceType    @default(UPLOAD)
   originalFilename String
   storedFilePath   String        // relative path under ./data/uploads
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   transcript Transcript?
   summaries  Summary[]
@@ -36,8 +53,8 @@ model Meeting {
 model Transcript {
   id             String   @id @default(uuid())
   meetingId      String   @unique
-  rawText        String   // extracted text
-  normalizedText String   // cleaned/normalized text
+  rawText        String   @db.Text // extracted text
+  normalizedText String   @db.Text // cleaned/normalized text
   detectedFormat String   // txt|vtt|srt|docx|pdf
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -50,8 +67,8 @@ model Summary {
   meetingId       String
   model           String
   promptVersion   String
-  summaryJson     String   // JSON string of structured summary
-  summaryMarkdown String   // Markdown formatted summary
+  summaryJson     String   @db.Text // JSON string of structured summary
+  summaryMarkdown String   @db.Text // Markdown formatted summary
   createdAt       DateTime @default(now())
 
   meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
@@ -61,15 +78,15 @@ model Summary {
 }
 
 model Job {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   meetingId String
-  type      String   // EXTRACT_TEXT | NORMALIZE_TRANSCRIPT | SUMMARIZE_TRANSCRIPT
-  status    String   @default("QUEUED") // QUEUED | RUNNING | SUCCESS | FAILED
-  attempts  Int      @default(0)
-  lastError String?
-  runAt     DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  type      JobType
+  status    JobStatus @default(QUEUED)
+  attempts  Int       @default(0)
+  lastError String?   @db.Text
+  runAt     DateTime  @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 

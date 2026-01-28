@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { MeetingStatus, SourceType, JobType, JobStatus } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs/promises";
 import path from "path";
@@ -75,8 +76,8 @@ export async function POST(request: NextRequest) {
         title: title || file.name.replace(/\.[^.]+$/, ""),
         meetingDate,
         tags: tags || null,
-        status: "PROCESSING",
-        sourceType: "UPLOAD",
+        status: MeetingStatus.PROCESSING,
+        sourceType: SourceType.UPLOAD,
         originalFilename: file.name,
         storedFilePath: storedFilename,
       },
@@ -86,8 +87,8 @@ export async function POST(request: NextRequest) {
     await prisma.job.create({
       data: {
         meetingId: meeting.id,
-        type: "EXTRACT_TEXT",
-        status: "QUEUED",
+        type: JobType.EXTRACT_TEXT,
+        status: JobStatus.QUEUED,
         runAt: new Date(),
       },
     });

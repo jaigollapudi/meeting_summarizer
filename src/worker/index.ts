@@ -1,11 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, JobType, JobStatus, MeetingStatus } from "@prisma/client";
 import { extractText } from "./extractors";
 import { normalizeTranscript } from "./normalizer";
 import { summarizeTranscript } from "./summarizer";
 
 const prisma = new PrismaClient();
-
-type JobType = "EXTRACT_TEXT" | "NORMALIZE_TRANSCRIPT" | "SUMMARIZE_TRANSCRIPT";
 
 const MAX_ATTEMPTS = 5;
 const POLL_INTERVAL = 2000; // 2 seconds
@@ -43,7 +41,7 @@ async function processJob(jobId: string) {
         // Mark meeting as ready
         await prisma.meeting.update({
           where: { id: job.meetingId },
-          data: { status: "READY" },
+          data: { status: MeetingStatus.READY },
         });
         break;
     }
@@ -51,7 +49,7 @@ async function processJob(jobId: string) {
     // Mark job as successful
     await prisma.job.update({
       where: { id: jobId },
-      data: { status: "SUCCESS" },
+      data: { status: JobStatus.SUCCESS },
     });
 
     console.log(`Job ${job.id} completed successfully`);
@@ -66,7 +64,7 @@ async function processJob(jobId: string) {
       await prisma.job.update({
         where: { id: jobId },
         data: {
-          status: "FAILED",
+          status: JobStatus.FAILED,
           lastError: errorMessage,
           attempts: newAttempts,
         },
@@ -74,7 +72,7 @@ async function processJob(jobId: string) {
 
       await prisma.meeting.update({
         where: { id: job.meetingId },
-        data: { status: "FAILED" },
+        data: { status: MeetingStatus.FAILED },
       });
 
       console.log(`Job ${job.id} failed permanently after ${newAttempts} attempts`);
@@ -86,7 +84,7 @@ async function processJob(jobId: string) {
       await prisma.job.update({
         where: { id: jobId },
         data: {
-          status: "QUEUED",
+          status: JobStatus.QUEUED,
           lastError: errorMessage,
           attempts: newAttempts,
           runAt,
@@ -178,7 +176,7 @@ async function enqueueJob(meetingId: string, type: JobType) {
     data: {
       meetingId,
       type,
-      status: "QUEUED",
+      status: JobStatus.QUEUED,
       runAt: new Date(),
     },
   });
@@ -192,7 +190,7 @@ async function claimJob(): Promise<string | null> {
   const result = await prisma.$transaction(async (tx) => {
     const job = await tx.job.findFirst({
       where: {
-        status: "QUEUED",
+        status: JobStatus.QUEUED,
         runAt: { lte: now },
       },
       orderBy: { runAt: "asc" },
@@ -202,7 +200,7 @@ async function claimJob(): Promise<string | null> {
 
     await tx.job.update({
       where: { id: job.id },
-      data: { status: "RUNNING" },
+      data: { status: JobStatus.RUNNING },
     });
 
     return job.id;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { MeetingStatus, JobType, JobStatus } from "@prisma/client";
 
 export async function POST(
   request: NextRequest,
@@ -27,15 +28,15 @@ export async function POST(
     // Update meeting status to PROCESSING
     await prisma.meeting.update({
       where: { id },
-      data: { status: "PROCESSING" },
+      data: { status: MeetingStatus.PROCESSING },
     });
 
     // Enqueue a new summarization job
     await prisma.job.create({
       data: {
         meetingId: id,
-        type: "SUMMARIZE_TRANSCRIPT",
-        status: "QUEUED",
+        type: JobType.SUMMARIZE_TRANSCRIPT,
+        status: JobStatus.QUEUED,
         runAt: new Date(),
       },
     });

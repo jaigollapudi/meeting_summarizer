@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-type MeetingStatus = "PROCESSING" | "READY" | "FAILED";
+import { MeetingStatus } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +14,7 @@ export async function GET(request: NextRequest) {
     const validStatuses: MeetingStatus[] = ["PROCESSING", "READY", "FAILED"];
 
     const where: {
-      status?: string;
+      status?: MeetingStatus;
       OR?: { title: { contains: string } }[];
     } = {};
 

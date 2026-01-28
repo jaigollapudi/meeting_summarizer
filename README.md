@@ -39,6 +39,8 @@ npm run db:push
 
 ### Configuration
 
+**Local Development:**
+
 Create a `.env` file in the project root:
 
 ```env
@@ -48,6 +50,24 @@ OPENAI_API_KEY="sk-your-api-key-here"
 OPENAI_MODEL="gpt-4.1-mini"
 MAX_UPLOAD_MB="25"
 ```
+
+**Vercel Deployment:**
+
+1. Create a Prisma Postgres database in your Vercel dashboard
+2. Add these environment variables in Vercel:
+   - `DATABASE_URL` - Your Prisma Postgres connection string
+   - `OPENAI_API_KEY` - Your OpenAI API key
+   - `OPENAI_MODEL` - Model name (e.g., "gpt-4.1-mini" or "gpt-5.1")
+   - `UPLOAD_DIR` - Set to `/tmp` for serverless (files are temporary)
+   - `MAX_UPLOAD_MB` - Maximum upload size (default: "25")
+
+3. Push to GitHub - Vercel will automatically deploy
+4. Migrations run automatically during build via `prisma migrate deploy`
+
+**Note:** The worker process (`npm run worker`) needs to run separately. For Vercel, consider:
+- Using Vercel Cron Jobs to trigger processing
+- Using a separate worker service (e.g., Railway, Render)
+- Or processing jobs synchronously in API routes (not recommended for long-running tasks)
 
 ### Running the Application
 
